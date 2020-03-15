@@ -1,0 +1,93 @@
+#include <Sabertooth.h>
+#include <math.h>
+/*DECLARATION OF VARIALBLE*/
+int pin1 = A2;
+int pin2 = A3;
+int pin3 = A4;
+int pin4 = A5;
+int val1;
+int val2;
+int val3;
+int val4;
+int jx1;
+int jx2;
+int jy1;
+int jy2;
+int JS1 = 0;
+int angle1 = 0;
+int vx;
+int vy;
+int motor1;
+int motor2;
+int motor3;
+int motor4;
+float pi = 3.141592;
+Sabertooth ST1(128, Serial1);
+Sabertooth ST2(130, Serial2);
+void setup()
+{
+  pinMode(pin1, INPUT);
+  pinMode(pin2, INPUT);
+  pinMode(pin3, INPUT);
+  pinMode(pin4, INPUT);
+
+  Sabertooth ST1(128);
+  Sabertooth ST2(130);
+  SabertoothTXPinSerial.begin(9600); // 9600 is the default baud rate for Sabertooth packet serial.
+  Sabertooth::autobaud(SabertoothTXPinSerial); // Autobaud is for the whole serial line -- you don't need to do
+  //  ST.autobaud(); // Send the autobaud command to the Sabertooth controller(s).
+  // NOTE: *Not all* Sabertooth controllers need this command.
+  //       It doesn't hurt anything, but V2 controllers use an
+  //       EEPROM setting (changeable with the function setBaudRate) to set
+  //       the baud rate instead of detecting with autobaud.
+  //
+  //       If you have a 2x12, 2x25 V2, 2x60 or SyRen 50, you can remove
+  SabertoothTXPinSerial.begin(19200);
+  Sabertooth::autobaud(SabertoothTXPinSerial); //       the autobaud line and save yourself two seconds of startup delay.
+}
+
+
+void loop()
+{
+  val1 = analogRead(pin1);
+  val2 = analogRead(pin2);
+  val3 = analogRead(pin3);
+  val4 = analogRead(pin4);
+  Serial.print(val1);
+  Serial.print(val2);
+  Serial.print(val3);
+  Serial.print(val4);
+  jx1 = map(val1, 0, 1023, -127, 127);
+  jy1 = map(val2, 0, 1023, -127, 127);
+  jx2 = map(val1, 0, 1023, -127, 127);
+  jy2 = map(val2, 0, 1023, -127, 127);
+  //FOR THE JOYSTICK 1ST
+  JS1 = sqrt(sq(jx1) + sq(jy1));
+  angle1 = atan(jy1 / jx1);
+  if (angle1 < 0) {
+    angle1 = angle1 * -1;
+  }
+  if (jx1 < 0 && jy1 > 0) {
+    angle1 = angle1 + (pi / 4);
+  }
+  else if (jx1 < 0 && jy1 < 0) {
+    angle1 = angle1 + (pi / 2);
+  }
+  else if (jx1 > 0 && jy1 < 0) {
+    angle1 = angle1 + ( pi * 3) / 4;
+  }
+  else {
+    angle1 = angle1;
+  }
+  vx = JS1 * sin(angle1);
+  vy = JS1 * cos(angle1);
+  motor1 = vx + vy;
+  motor2 = vx - vy;
+  motor3 = vx + vy;
+  motor4 = vx - vy;
+  ST1.motor(1, motor1);
+  ST1.motor(2, motor1);
+  ST2.motor(1, motor3);
+  ST2.motor(2, motor4);
+ST1.setMinVoltage(11.4);
+}
